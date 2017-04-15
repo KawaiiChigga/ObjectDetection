@@ -30,6 +30,7 @@ public class View extends javax.swing.JFrame implements Runnable {
 
     private JPanel contentPane;
     private JLabel content;
+    private ImageIcon imgFrame;
     VideoCap videoCap;
     Thread th;
     
@@ -51,7 +52,6 @@ public class View extends javax.swing.JFrame implements Runnable {
     public void prepare() {
         content = new JLabel();
         content.setOpaque(true);
-        content.setBounds(0, 0, 640, 480);
         
         add(content);
     }
@@ -71,17 +71,18 @@ public class View extends javax.swing.JFrame implements Runnable {
     private void initComponents() {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setSize(new java.awt.Dimension(640, 480));
+        setPreferredSize(new java.awt.Dimension(656, 521));
+        setSize(new java.awt.Dimension(656, 521));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 640, Short.MAX_VALUE)
+            .addGap(0, 641, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 480, Short.MAX_VALUE)
+            .addGap(0, 481, Short.MAX_VALUE)
         );
 
         pack();
@@ -124,7 +125,9 @@ public class View extends javax.swing.JFrame implements Runnable {
             repaint();
             try {
                 Thread.sleep(30);
-                content.setIcon(new ImageIcon(videoCap.getOneFrame()));
+                imgFrame = new ImageIcon(videoCap.getOneFrame());
+                content.setBounds(0, 0, imgFrame.getIconWidth(), imgFrame.getIconHeight());
+                content.setIcon(imgFrame);
             } catch (Exception e) {
             }
         }
