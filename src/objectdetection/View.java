@@ -114,7 +114,6 @@ public class View extends javax.swing.JFrame implements Runnable {
             java.util.logging.Logger.getLogger(View.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
-
         /* Create and display the form */
         new View().setVisible(true);
     }
@@ -124,10 +123,11 @@ public class View extends javax.swing.JFrame implements Runnable {
         while(true) {
             repaint();
             try {
-                Thread.sleep(30);
+                
                 imgFrame = new ImageIcon(videoCap.getOneFrame());
                 content.setBounds(0, 0, imgFrame.getIconWidth(), imgFrame.getIconHeight());
                 content.setIcon(imgFrame);
+                Thread.sleep(30);
             } catch (Exception e) {
             }
         }

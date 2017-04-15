@@ -93,42 +93,45 @@ public class VideoCap {
         return hasil;
     }
 
-    public BufferedImage getOneFrame() {
+    public BufferedImage getOneFrame() throws IOException {
         cap.read(mat2Img.mat);
         Imgproc.cvtColor(mat2Img.mat, mat2Img.mat, Imgproc.COLOR_BGR2RGB);
-        BufferedImage img = mat2Img.getImage(mat2Img.mat);
+//        BufferedImage img = mat2Img.getImage(mat2Img.mat);
+        BufferedImage img = ImageIO.read(new File("src/img/sample.jpg"));
         BufferedImage hasil = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
         daftar = new ArrayList<>();
-
         process(img, 0, img.getWidth(), 0, img.getHeight());
-         Integer warna;
+        Integer warna;
+//        System.out.println("start");
         for (int i = 0; i < daftar.size(); i++) {
             warna = (Integer) daftar.get(i).get(4);
             int start1 = (int) daftar.get(i).get(0);
             int start2 = (int) daftar.get(i).get(2);
             int end1 = (int) daftar.get(i).get(1);
             int end2 = (int) daftar.get(i).get(3);
-//            System.out.println(start1+" "+end1+" "+start2+" "+end2);
+//            System.out.println(start1+" "+end1+"\n"+start2+" "+end2+" WARNA : " + warna);
+//            System.out.println("");
             for (int j = start1; j <end1; j++) {
                 for (int k = start2; k <end2; k++) {
                     hasil.setRGB(j, k, new Color(warna, warna, warna).getRGB());
                 }
             }
         }
+//        System.out.println("end");
         
         return hasil;
     }
 
     public void process(BufferedImage img, int startWidth, int endWidth, int startHeight, int endHeight) {
-
+//        System.out.println("proses");
         if (check(img, startWidth, endWidth, startHeight, endHeight)
                 || Math.abs(startWidth - endWidth) <= 2 || Math.abs(startHeight - endHeight) <= 2) {
             return;
         } else {
-            process(img, startWidth, Math.abs(endWidth / 2), startHeight, Math.abs(endHeight / 2));//kiri atas
-            process(img, Math.abs(endWidth / 2), endWidth, startHeight, Math.abs(endHeight / 2));//kanan atas
-            process(img, startWidth, Math.abs(endWidth / 2), Math.abs(endHeight / 2), endHeight);//kiri bawah
-            process(img, Math.abs(endWidth / 2), Math.abs(endWidth - 1), Math.abs(endHeight / 2), Math.abs(endHeight - 1));//kanan bawah
+            process(img, startWidth, Math.abs((startWidth+endWidth) / 2), startHeight, Math.abs((endHeight+startHeight) / 2));//kiri atas
+            process(img, Math.abs((startWidth+endWidth) / 2), endWidth, startHeight, Math.abs((endHeight+startHeight) / 2));//kanan atas
+            process(img, startWidth, Math.abs((startWidth+endWidth) / 2), Math.abs((endHeight+startHeight) / 2), endHeight);//kiri bawah
+            process(img, Math.abs((startWidth+endWidth) / 2), endWidth, Math.abs((endHeight+startHeight) / 2), endHeight);//kanan bawah
         }
     }
 
@@ -138,29 +141,54 @@ public class VideoCap {
         int r;
         int g;
         int b;
-        int threshold = 2;
+        int threshold = 40;
         int grayscale;
         ArrayList<Integer> temp = new ArrayList<>();
-        for (int i = startWidth + 1; i < endWidth - 1; i++) {
-            for (int j = startHeight + 1; j < endHeight - 1; j++) {
-                c = new Color(img.getRGB(i, j));
+//        System.out.println(startWidth + " " + endWidth);
+//        System.out.println(startHeight + " " + endHeight);
+        for (int i = startHeight; i < endHeight; i++) {
+//            System.out.println("i : "+i);
+            for (int j = startWidth; j < endWidth; j++) {
+//                System.out.println("j : " + j);
+                c = new Color(img.getRGB(j, i));
                 r = c.getRed();
                 g = c.getGreen();
                 b = c.getBlue();
                 grayscale = (r + g + b) / 3;
 
-                c = new Color(img.getRGB(i - 1, j));
-                int kiri = (c.getRed() + c.getGreen() + c.getBlue()) / 3;
-
-                c = new Color(img.getRGB(i + 1, j));
-                int kanan = (c.getRed() + c.getGreen() + c.getBlue()) / 3;
-
-                c = new Color(img.getRGB(i, j - 1));
-                int atas = (c.getRed() + c.getGreen() + c.getBlue()) / 3;
-
-                c = new Color(img.getRGB(i, j + 1));
-                int bawah = (c.getRed() + c.getGreen() + c.getBlue()) / 3;
-
+                int kiri, kanan, atas, bawah;
+                if (j == 0) {
+                    kiri = grayscale;
+                } else {
+                    c = new Color(img.getRGB(j - 1, i));
+                    kiri = (c.getRed() + c.getGreen() + c.getBlue()) / 3;
+//                    System.out.println("kiri");
+                }
+                
+                if (j == img.getWidth()-1) {
+                    kanan = grayscale;
+                } else {
+                    c = new Color(img.getRGB(j + 1, i));
+                    kanan = (c.getRed() + c.getGreen() + c.getBlue()) / 3;
+//                    System.out.println("kanan");
+                }
+                
+                if (i == 0) {
+                    atas = grayscale;
+                } else {
+                    c = new Color(img.getRGB(j, i - 1));
+                    atas = (c.getRed() + c.getGreen() + c.getBlue()) / 3;
+//                    System.out.println("atas");
+                }
+                
+                if (i == img.getHeight()-1) {
+                    bawah = grayscale;
+                } else {
+                    c = new Color(img.getRGB(j, i + 1));
+                    bawah = (c.getRed() + c.getGreen() + c.getBlue()) / 3;
+//                    System.out.println("bawah");
+                }
+                
                 if (Math.abs(grayscale - kiri) > threshold || Math.abs(grayscale - kanan) > threshold
                         || Math.abs(grayscale - atas) > threshold || Math.abs(grayscale - bawah) > threshold) {
                     same = false;
