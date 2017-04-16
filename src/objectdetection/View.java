@@ -37,16 +37,11 @@ public class View extends javax.swing.JFrame implements Runnable {
     public View() {
         initComponents();
         setLayout(null);
-        prepare();
-        
-//        contentPane = new JPanel();
-//        setContentPane(contentPane);
-//        contentPane.setLayout(null);
-//        contentPane.setBounds(0, 0, 200, 200);
         videoCap = new VideoCap();
+        setLocationRelativeTo(null);
+        prepare();
         th = new Thread(this);
         th.start();
-        
     }
 
     public void prepare() {
@@ -127,7 +122,8 @@ public class View extends javax.swing.JFrame implements Runnable {
                 imgFrame = new ImageIcon(videoCap.getOneFrame());
                 content.setBounds(0, 0, imgFrame.getIconWidth(), imgFrame.getIconHeight());
                 content.setIcon(imgFrame);
-                Thread.sleep(30);
+                setSize(imgFrame.getIconWidth(), imgFrame.getIconHeight());
+                Thread.sleep(1000);
             } catch (Exception e) {
             }
         }

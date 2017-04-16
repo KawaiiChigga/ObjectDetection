@@ -12,7 +12,11 @@ import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
+import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.opencv.core.Core;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
@@ -26,6 +30,16 @@ public class VideoCap {
     static {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     }
+    
+    class Point {
+        int x;
+        int y;
+        public Point(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+    
     Random rand = new Random();
     int id = 0;
     VideoCapture cap;
@@ -34,112 +48,124 @@ public class VideoCap {
     ArrayList<ArrayList> daftar;
     ArrayList<ArrayList> akhir;
 
+    int checked[][];
+    Vector<Point> pointlist;
+    
     VideoCap() {
         cap = new VideoCapture();
         cap.open(0);
     }
 
-    public BufferedImage getOneFrameOld() throws IOException {
-
-        cap.read(mat2Img.mat);
-        Imgproc.cvtColor(mat2Img.mat, mat2Img.mat, Imgproc.COLOR_BGR2RGB);
-        BufferedImage img = mat2Img.getImage(mat2Img.mat);
-//        BufferedImage img = ImageIO.read(new File("src/img/sample.jpg"));
-        BufferedImage hasil = new BufferedImage(img.getWidth() + 1, img.getHeight() + 1, img.getType());
-        int kernel[] = new int[]{
-            1, 2, 1,
-            2, 4, 2,
-            1, 2, 1
-        };
-        for (int i = 0; i <= img.getWidth(); i++) {
-            for (int j = 0; j <= img.getHeight(); j++) {
-                if (i == 0 || i == img.getWidth() || j == 0 || j == img.getHeight()) {
-                    hasil.setRGB(i, j, Color.RED.getRGB());
-                } else {
-//                    int r, g, b;
-//                    for (int i = 0; i < kernel.length;)
-//                    Color c = new Color(img.getRGB(i, j));
-//                    int r = c.getRed();
-//                    int g = c.getGreen();
-//                    int b = c.getBlue();
-
-//                    int grayscale = (r + g + b) /3;
-                    hasil.setRGB(i, j, img.getRGB(i - 1, j - 1));
-                }
-            }
-        }
-        for (int i = 1; i < img.getWidth(); i++) {
-            for (int j = 1; j < img.getHeight(); j++) {
-                Color[] pixel = new Color[9];
-                pixel[0] = new Color(hasil.getRGB(i - 1, j - 1));
-                pixel[1] = new Color(hasil.getRGB(i, j - 1));
-                pixel[2] = new Color(hasil.getRGB(i + 1, j - 1));
-                pixel[3] = new Color(hasil.getRGB(i - 1, j));
-                pixel[4] = new Color(hasil.getRGB(i, j));
-                pixel[5] = new Color(hasil.getRGB(i + 1, j));
-                pixel[6] = new Color(hasil.getRGB(i - 1, j + 1));
-                pixel[7] = new Color(hasil.getRGB(i, j + 1));
-                pixel[8] = new Color(hasil.getRGB(i + 1, j + 1));
-
-                int r = 0, g = 0, b = 0;
-                for (int k = 0; k < kernel.length; k++) {
-                    r += pixel[k].getRed() * kernel[k];
-                    g += pixel[k].getGreen() * kernel[k];
-                    b += pixel[k].getBlue() * kernel[k];
-                }
-                r = r / 16;
-                g = g / 16;
-                b = b / 16;
-                hasil.setRGB(i, j, new Color(r, g, b).getRGB());
-            }
-        }
-        return hasil;
-    }
-
-    public BufferedImage getOneFrame() throws IOException {
+    public BufferedImage getOneFrame(){
         cap.read(mat2Img.mat);
         id = 0;
         Imgproc.cvtColor(mat2Img.mat, mat2Img.mat, Imgproc.COLOR_BGR2RGB);
 //        BufferedImage img = mat2Img.getImage(mat2Img.mat);
-        BufferedImage img = ImageIO.read(new File("src/img/4.jpg"));
-        BufferedImage hasil = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
+        BufferedImage img = null;
+        try {
+            img = ImageIO.read(new File("src/img/sample.jpg"));
+        } catch (IOException ex) {
+            Logger.getLogger(VideoCap.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        BufferedImage hasil;
+        int mode = 0;
+        if (mode == 0) {
+            hasil = split(img);
+        } else {
+            hasil = colorimage(img, 40);
+        }
+
+        return hasil;
+    }
+    
+    public BufferedImage colorimage(BufferedImage img, int treshold) {
+        BufferedImage temp = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
+        
+        checked = new int[img.getWidth()][img.getHeight()];
+        pointlist = new Vector();
+
+        for (int i = 0; i < img.getWidth(); i++) {
+            for (int j = 0; j < img.getHeight(); j++) {
+                checked[i][j] = 0;
+            }
+        }
+        
+        for (int x = 0; x < img.getWidth(); x++) {
+            for (int y = 0; y < img.getHeight(); y++) {
+                if (checked[x][y] == 0) {
+                    Color color = new Color(img.getRGB(x, y));
+                    pointlist.add(new Point(x, y));
+                    search(img, temp, color, treshold);
+                }
+            }
+        }
+        
+        return temp;
+    }
+    
+    public void search(BufferedImage img, BufferedImage temp, Color color, int treshold){
+        while(pointlist.size() > 0) {
+            Point p = pointlist.remove(0);
+            if ((p.x >= 0) && (p.y >= 0) && (p.x < img.getWidth()) && (p.y < img.getHeight())) {
+                if (checked[p.x][p.y] == 0) {
+                    Color c = new Color(img.getRGB(p.x, p.y));
+                    if (Math.abs(c.getRed()-color.getRed()) <= treshold &&
+                            Math.abs(c.getGreen()-color.getGreen()) <= treshold &&
+                            Math.abs(c.getBlue()-color.getBlue()) <= treshold) {
+                        temp.setRGB(p.x, p.y, color.getRGB());
+                        checked[p.x][p.y] = 1;
+                        
+                        pointlist.add(new Point(p.x - 1, p.y - 1));
+                        pointlist.add(new Point(p.x, p.y - 1));
+                        pointlist.add(new Point(p.x + 1, p.y - 1));
+                        pointlist.add(new Point(p.x - 1, p.y));
+                        pointlist.add(new Point(p.x + 1, p.y));
+                        pointlist.add(new Point(p.x - 1, p.y + 1));
+                        pointlist.add(new Point(p.x, p.y + 1));
+                        pointlist.add(new Point(p.x + 1, p.y + 1));
+                    }
+                }
+            }
+        }
+    }
+    
+    public BufferedImage split(BufferedImage img){
+        BufferedImage temp = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
         daftar = new ArrayList<>();
         akhir = new ArrayList<>();
         process(img, 0, img.getWidth(), 0, img.getHeight());
-        Integer warna;
-        merge();
-        for (int i = 0; i < akhir.size(); i++) {
-            int r = (Integer) akhir.get((int)akhir.get(i).get(7)).get(4);
-            int g = (Integer) akhir.get((int)akhir.get(i).get(7)).get(5);
-            int b = (Integer) akhir.get((int)akhir.get(i).get(7)).get(6);
-//            warna = (Integer) akhir.get(i).get(4);
-            int start1 = (int) akhir.get(i).get(0);
-            int start2 = (int) akhir.get(i).get(2);
-            int end1 = (int) akhir.get(i).get(1);
-            int end2 = (int) akhir.get(i).get(3);
-
-//        for (int i = 0; i < daftar.size(); i++) {
-//            int r = (Integer) daftar.get(i).get(4);
-//            int g = (Integer) daftar.get(i).get(5);
-//            int b = (Integer) daftar.get(i).get(6);
+//        Integer warna;
+//        merge();
+//        for (int i = 0; i < akhir.size(); i++) {
+//            int r = (Integer) akhir.get((int)akhir.get(i).get(7)).get(4);
+//            int g = (Integer) akhir.get((int)akhir.get(i).get(7)).get(5);
+//            int b = (Integer) akhir.get((int)akhir.get(i).get(7)).get(6);
+////            warna = (Integer) akhir.get(i).get(4);
+//            int start1 = (int) akhir.get(i).get(0);
+//            int start2 = (int) akhir.get(i).get(2);
+//            int end1 = (int) akhir.get(i).get(1);
+//            int end2 = (int) akhir.get(i).get(3);
+        for (int i = 0; i < daftar.size(); i++) {
+            int r = (Integer) daftar.get(i).get(4);
+            int g = (Integer) daftar.get(i).get(5);
+            int b = (Integer) daftar.get(i).get(6);
 //            warna = (Integer) daftar.get(i).get(4);
-//            int start1 = (int) daftar.get(i).get(0);
-//            int start2 = (int) daftar.get(i).get(2);
-//            int end1 = (int) daftar.get(i).get(1);
-//            int end2 = (int) daftar.get(i).get(3);
+            int start1 = (int) daftar.get(i).get(0);
+            int start2 = (int) daftar.get(i).get(2);
+            int end1 = (int) daftar.get(i).get(1);
+            int end2 = (int) daftar.get(i).get(3);
 
             for (int j = start1; j < end1; j++) {
                 for (int k = start2; k < end2; k++) {
 //                    hasil.setRGB(j, k, new Color(warna, warna, warna).getRGB());
                     
-                    hasil.setRGB(j, k, new Color(r, g, b).getRGB());
+                    temp.setRGB(j, k, new Color(r, g, b).getRGB());
                 }
             }
         }
-
-        return hasil;
+        return temp;
     }
-
+    
     public void process(BufferedImage img, int startWidth, int endWidth, int startHeight, int endHeight) {
         if (check(img, startWidth, endWidth, startHeight, endHeight)
                 || Math.abs(startWidth - endWidth) <= 2 || Math.abs(startHeight - endHeight) <= 2) {
