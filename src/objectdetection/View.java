@@ -17,6 +17,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSlider;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
@@ -31,6 +32,9 @@ public class View extends javax.swing.JFrame implements Runnable {
     private JPanel contentPane;
     private JLabel content;
     private ImageIcon imgFrame;
+    private JSlider treshold;
+    private JLabel nilaitres;
+    
     VideoCap videoCap;
     Thread th;
     
@@ -48,7 +52,17 @@ public class View extends javax.swing.JFrame implements Runnable {
         content = new JLabel();
         content.setOpaque(true);
         
+        treshold = new JSlider();
+        treshold.setOrientation(JSlider.HORIZONTAL);
+        treshold.setMaximum(180);
+        treshold.setMinimum(0);
+        treshold.setValue(40);
+        
+        nilaitres = new JLabel();
+        
         add(content);
+        add(treshold);
+        add(nilaitres);
     }
     
 //    public void paint(Graphics g) {
@@ -66,18 +80,17 @@ public class View extends javax.swing.JFrame implements Runnable {
     private void initComponents() {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setPreferredSize(new java.awt.Dimension(656, 521));
         setSize(new java.awt.Dimension(656, 521));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 641, Short.MAX_VALUE)
+            .addGap(0, 656, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 481, Short.MAX_VALUE)
+            .addGap(0, 521, Short.MAX_VALUE)
         );
 
         pack();
@@ -118,12 +131,16 @@ public class View extends javax.swing.JFrame implements Runnable {
         while(true) {
             repaint();
             try {
-                
-                imgFrame = new ImageIcon(videoCap.getOneFrame());
+                int t = treshold.getValue();
+                imgFrame = new ImageIcon(videoCap.getOneFrame(t));
+                setSize(imgFrame.getIconWidth(), imgFrame.getIconHeight() + 100);
+                treshold.setBounds(100, getHeight()-85, 100, 20);
+                nilaitres.setBounds(100, getHeight()-65, 100, 20);
+                nilaitres.setText(t+"");
+                nilaitres.setHorizontalAlignment(JLabel.CENTER);
                 content.setBounds(0, 0, imgFrame.getIconWidth(), imgFrame.getIconHeight());
                 content.setIcon(imgFrame);
-                setSize(imgFrame.getIconWidth(), imgFrame.getIconHeight());
-                Thread.sleep(1000);
+                Thread.sleep(500);
             } catch (Exception e) {
             }
         }

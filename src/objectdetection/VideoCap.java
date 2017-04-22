@@ -45,6 +45,8 @@ public class VideoCap {
     VideoCapture cap;
     Mat2Image mat2Img = new Mat2Image();
     int warna = 0;
+    int tres = 0;
+    
     ArrayList<ArrayList> daftar;
     ArrayList<ArrayList> akhir;
 
@@ -52,14 +54,15 @@ public class VideoCap {
     Vector<Point> pointlist;
     
     VideoCap() {
-        cap = new VideoCapture();
-        cap.open(0);
+//        cap = new VideoCapture();
+//        cap.open(0);
     }
 
-    public BufferedImage getOneFrame(){
-        cap.read(mat2Img.mat);
+    public BufferedImage getOneFrame(int tres){
+        this.tres = tres;
+//        cap.read(mat2Img.mat);
         id = 0;
-        Imgproc.cvtColor(mat2Img.mat, mat2Img.mat, Imgproc.COLOR_BGR2RGB);
+//        Imgproc.cvtColor(mat2Img.mat, mat2Img.mat, Imgproc.COLOR_BGR2RGB);
 //        BufferedImage img = mat2Img.getImage(mat2Img.mat);
         BufferedImage img = null;
         try {
@@ -71,8 +74,9 @@ public class VideoCap {
         int mode = 0;
         if (mode == 0) {
             hasil = split(img);
+            System.out.println(daftar.size());
         } else {
-            hasil = colorimage(img, 40);
+            hasil = colorimage(img, tres);
         }
 
         return hasil;
@@ -134,26 +138,32 @@ public class VideoCap {
         daftar = new ArrayList<>();
         akhir = new ArrayList<>();
         process(img, 0, img.getWidth(), 0, img.getHeight());
+        System.out.println("Merge");
+        merge2();
 //        Integer warna;
 //        merge();
-//        for (int i = 0; i < akhir.size(); i++) {
+        for (int i = 0; i < akhir.size()-1; i++) {
+            
+            int r = (Integer) akhir.get(i).get(4);
+            int g = (Integer) akhir.get(i).get(5);
+            int b = (Integer) akhir.get(i).get(6);
 //            int r = (Integer) akhir.get((int)akhir.get(i).get(7)).get(4);
 //            int g = (Integer) akhir.get((int)akhir.get(i).get(7)).get(5);
 //            int b = (Integer) akhir.get((int)akhir.get(i).get(7)).get(6);
-////            warna = (Integer) akhir.get(i).get(4);
-//            int start1 = (int) akhir.get(i).get(0);
-//            int start2 = (int) akhir.get(i).get(2);
-//            int end1 = (int) akhir.get(i).get(1);
-//            int end2 = (int) akhir.get(i).get(3);
-        for (int i = 0; i < daftar.size(); i++) {
-            int r = (Integer) daftar.get(i).get(4);
-            int g = (Integer) daftar.get(i).get(5);
-            int b = (Integer) daftar.get(i).get(6);
-//            warna = (Integer) daftar.get(i).get(4);
-            int start1 = (int) daftar.get(i).get(0);
-            int start2 = (int) daftar.get(i).get(2);
-            int end1 = (int) daftar.get(i).get(1);
-            int end2 = (int) daftar.get(i).get(3);
+//            warna = (Integer) akhir.get(i).get(4);
+            int start1 = (int) akhir.get(i).get(0);
+            int start2 = (int) akhir.get(i).get(2);
+            int end1 = (int) akhir.get(i).get(1);
+            int end2 = (int) akhir.get(i).get(3);
+//        for (int i = 0; i < daftar.size(); i++) {
+//            int r = (Integer) daftar.get(i).get(4);
+//            int g = (Integer) daftar.get(i).get(5);
+//            int b = (Integer) daftar.get(i).get(6);
+////            warna = (Integer) daftar.get(i).get(4);
+//            int start1 = (int) daftar.get(i).get(0);
+//            int start2 = (int) daftar.get(i).get(2);
+//            int end1 = (int) daftar.get(i).get(1);
+//            int end2 = (int) daftar.get(i).get(3);
 
             for (int j = start1; j < end1; j++) {
                 for (int k = start2; k < end2; k++) {
@@ -184,7 +194,6 @@ public class VideoCap {
         int r = 0;
         int g = 0;
         int b = 0;
-        int threshold = 20;
         int grayscale = 0;
         ArrayList<Integer> temp = new ArrayList<>();
         for (int i = startHeight; i < endHeight; i++) {
@@ -224,8 +233,8 @@ public class VideoCap {
                     bawah = (c.getRed() + c.getGreen() + c.getBlue()) / 3;
                 }
 
-                if (Math.abs(grayscale - kiri) > threshold || Math.abs(grayscale - kanan) > threshold
-                        || Math.abs(grayscale - atas) > threshold || Math.abs(grayscale - bawah) > threshold) {
+                if (Math.abs(grayscale - kiri) > tres || Math.abs(grayscale - kanan) > tres
+                        || Math.abs(grayscale - atas) > tres || Math.abs(grayscale - bawah) > tres) {
                     same = false;
                     break;
                 }
@@ -252,6 +261,118 @@ public class VideoCap {
         return same;
     }
 
+    public boolean isNeighbour(ArrayList<Integer> p1, ArrayList<Integer> p2) {
+        ArrayList<Integer> max;
+        ArrayList<Integer> min;
+        if ((p1.get(1) - p1.get(0)) > (p2.get(1) - p2.get(0))) {
+            max = p1;
+            min = p2;
+        } else {
+            max = p2;
+            min = p1;
+        }
+//        System.out.println(max.get(0) + " " + max.get(1) + " " + max.get(2) + " " + max.get(3));
+//        System.out.println(min.get(0) + " " + min.get(1) + " " + min.get(2) + " " + min.get(3));
+        if (min.get(2) >= max.get(2) && min.get(3) <= max.get(3)) {
+//            System.out.println("horizontal");
+            if (min.get(0) == max.get(1) || max.get(0) == min.get(1)) {
+                return true;
+            }
+            return false;
+        }
+        if (min.get(0) >= max.get(0) && min.get(1) <= max.get(1)) {
+            if (min.get(2) == max.get(3) || max.get(2) == min.get(3)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public void merge2() {
+        ArrayList<ArrayList> merge = new ArrayList();
+        System.out.println("cek tetangga");
+        for (int i = 0; i < daftar.size()-1; i++) {
+            ArrayList<Integer> tetangga = new ArrayList();
+            tetangga.add(i);
+            for (int j = (i+1); j < daftar.size(); j++) {
+                if (isNeighbour(daftar.get(i), daftar.get(j))) {
+                    tetangga.add(j);
+                }
+            }
+            merge.add(tetangga);
+        }
+        int [] id = new int[daftar.size()];
+        System.out.println("prepare id");
+        for (int i = 0; i < id.length; i++) {
+            id[i] = -1;
+        }
+        int pk = 0;
+        System.out.println("gabung by id");
+        for (int i = 0; i < merge.size(); i++) {
+            int r = (Integer) daftar.get(i).get(4);
+            int g = (Integer) daftar.get(i).get(5);
+            int b = (Integer) daftar.get(i).get(6);
+            int gray = (r + g + b) /3;
+            if (id[i] == -1) {
+                id[i] = pk;
+                pk++;
+            }
+//            System.out.println(i + " - " + pk + " - ");
+            for (int j = 1; j < merge.get(i).size(); j++) {
+                int change = (Integer) merge.get(i).get(j);
+                int rj = (Integer) daftar.get(change).get(4);
+                int gj = (Integer) daftar.get(change).get(5);
+                int bj = (Integer) daftar.get(change).get(6);
+                int grayj = (rj + gj + bj) /3;
+//                System.out.println("  " + grayj);
+                if (Math.abs(gray - grayj) < tres) {
+                    id[change] = id[i];
+                }
+            }
+        }
+//        for (int i = 0; i < id.length; i++) {
+//            System.out.println(i + " ID : " + id[i]);
+//        }
+        System.out.println("pecah warna");
+        ArrayList<ArrayList> warna = new ArrayList();
+//        System.out.println(pk);
+        for (int i = 0; i < pk; i++) {
+            ArrayList<Integer> temp = new ArrayList();
+            int r = 0;
+            int g = 0;
+            int b = 0;
+            int count = 0;
+            for (int j = 0; j < id.length; j++) {
+                if (id[j] == i) {
+                    count++;
+                    r = r + (Integer) daftar.get(j).get(4);
+                    g = g + (Integer) daftar.get(j).get(5);
+                    b = b + (Integer) daftar.get(j).get(6);
+                }
+            }
+            temp.add(r/count);
+            temp.add(g/count);
+            temp.add(b/count);
+            warna.add(temp);
+        }
+        System.out.println("add ke akhir");
+        for (int i = 0; i < id.length; i++) {
+            ArrayList<Integer> temp = new ArrayList();
+            temp.add((Integer) daftar.get(i).get(0));
+            temp.add((Integer) daftar.get(i).get(1));
+            temp.add((Integer) daftar.get(i).get(2));
+            temp.add((Integer) daftar.get(i).get(3));
+            for (int j = 0; j < pk; j++) {
+                if (id[i] == j) {
+                    temp.add((Integer) warna.get(j).get(0));
+                    temp.add((Integer) warna.get(j).get(1));
+                    temp.add((Integer) warna.get(j).get(2));
+                }
+            }
+            akhir.add(temp);
+        }
+    }
+    
     public void merge() {
         ArrayList<Integer> temp;
         int gray ;
