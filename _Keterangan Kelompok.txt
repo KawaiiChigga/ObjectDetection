@@ -1,0 +1,11 @@
+Tema : Object Detection
+
+Kelompok : 
+- Daniel - 1115001
+- Kenny Reynaldo - 1115015
+- Evan Joshua - 1115016
+- Jovin Angelico - 1115029
+
+Penggunaan Metode : 
+- Splitting and Merging
+- Color Image Segmentation
