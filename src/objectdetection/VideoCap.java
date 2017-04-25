@@ -54,24 +54,27 @@ public class VideoCap {
     Vector<Point> pointlist;
     
     VideoCap() {
-//        cap = new VideoCapture();
+        cap = new VideoCapture();
 //        cap.open(0);
     }
 
-    public BufferedImage getOneFrame(int tres){
+    public BufferedImage getOneFrame(int tres, String location, int cam, int mode){
         this.tres = tres;
-//        cap.read(mat2Img.mat);
-        id = 0;
-//        Imgproc.cvtColor(mat2Img.mat, mat2Img.mat, Imgproc.COLOR_BGR2RGB);
-//        BufferedImage img = mat2Img.getImage(mat2Img.mat);
         BufferedImage img = null;
-        try {
-            img = ImageIO.read(new File("src/img/sample.jpg"));
-        } catch (IOException ex) {
-            Logger.getLogger(VideoCap.class.getName()).log(Level.SEVERE, null, ex);
+        if (cam == 1) {
+            cap.open(0);
+            cap.read(mat2Img.mat);
+            Imgproc.cvtColor(mat2Img.mat, mat2Img.mat, Imgproc.COLOR_BGR2RGB);
+            img = mat2Img.getImage(mat2Img.mat);
+        } else {
+            try {
+                img = ImageIO.read(new File(location));
+            } catch (IOException ex) {
+                Logger.getLogger(VideoCap.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
         BufferedImage hasil;
-        int mode = 0;
+//        int mode = 0;
         if (mode == 0) {
             hasil = split(img);
             System.out.println(daftar.size());
